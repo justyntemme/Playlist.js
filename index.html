@@ -7,7 +7,10 @@
 </head>
 <body>
     <h1>Playlist</h1>
-
+    <div id="meta">
+        <span id="songname"></span>
+    </div>
+    <div id="player"></div>
     <script src="playlist.js"></script>
     <script>
         // To create a new Track object:
@@ -26,8 +29,24 @@
             track_year: 2017              // default:  new Date().getFullYear()
         })
 
+        // The Track object has setters and getters for every property as well.
+        // They are self explanatory. All are shown below.
+        /**
+         * track.setName(name)
+         * track.getName()
+         * track.setArtist(artist)
+         * track.getArtist()
+         * track.setAlbum(album)
+         * track.getAlbum()
+         * track.setGenre(genre)   // overwrites the whole list
+         * track.getGenre()        // returns the whole list
+         * track.addGenre(genre)
+         * track.removeGenre(genre|number)
+         * track.setYear(year)
+         * track.getYear()
+         */
 
-        // the track list may contain paths to audio files
+        // the track list for a Playlist may contain paths to audio files
         // or Track objects.
         var tracks = [
             my360PongTrack,
@@ -54,11 +73,11 @@
         // All other methods:
         /**
          *
-         * player.play([track])      // play the current Track. optionally pass
+         * player.play([track])      // play the current track. optionally pass
          *                           // in a Track object or a number to call setTrack() first.
          *                           // i.e.:
-         *                           // player.play(2) is equivalent to:
-         *                           // player.setTrack(2); player.play()
+         *                           // player.play(foo) is equivalent to:
+         *                           // player.setTrack(foo); player.play()
          *
          * player.pause()            // pauses current track at the current time
          *
@@ -70,29 +89,31 @@
          *
          * player.shuffle()          // stops the current track and shuffles the playlist.
          *
-         * player.getTrack()         // returns the current track (Audio element)
+         * player.getTrack()         // returns the current Track object
          *
-         * player.setTrack(track)    // setTrack can accept either a track number,
-         *                           // OR a reference to an Audio element that
+         * player.getAudio()         // returns the Playlist's HTML Audio element
+         *                           // NOTE: This Audio element has an 'ended' event listener attached.
+         *
+         * player.setTrack(track)    // accepts either a track number, or a Track object that
          *                           // is already on the playlist.
          *
          * player.addTrack(track)    // addTrack can accept either a single track,
-         *                           // or an array of tracks, where "track" is defined in the
-         *                           // same way as the track list passed into the constructor.
+         *                           // or an array of tracks, where "track" is
+         *                           // either a path to an audio file or a Track object.
          *
          * player.removeTrack(track) // calls stop() on the current track, then removes
-         *                           // the given track or tracks from the playlist.
+         *                           // the given track/tracks from the playlist.
          *                           // can accept either a single track,
-         *                           // or an array of tracks, where "track" is defined in the
-         *                           // same way as the track list passed into the constructor.
+         *                           // or an array of tracks, where "track" is
+         *                           // either a path to an audio file or a Track object.
          *
-         * player.next()             // calls stop() on the current track and then
-         *                           // switches the current track to the next song.
+         * player.next()             // calls stop() on the current track, and then
+         *                           // switches to the next track, and then calls play().
          *                           // if the current track is last on the playlist,
          *                           // it switches to the first.
          *
-         * player.prev()             // calls stop() on the current track and then
-         *                           // switches the current track to the previous song.
+         * player.prev()             // calls stop() on the current track, and then
+         *                           // switches to the previous track, and then calls play().
          *                           // if the current track is first on the playlist,
          *                           // it switches to the last.
          *
@@ -117,6 +138,13 @@
          * player.getTrackLength()   // get length of the current track in seconds
          *
          */
+
+        // EXAMPLE to render the Audio element on the page:
+        document.getElementById('player').appendChild(player.getAudio())
+
+        // EXAMPLE to show song name on page:
+        var track = player.getTrack()
+        document.getElementById('songname').textContent = '"' + track.getName() + '" by ' + track.getArtist()
     </script>
 </body>
 </html>

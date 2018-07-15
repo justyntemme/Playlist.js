@@ -1,6 +1,5 @@
 class Track {
     constructor (filepath, metadata) {
-        this.filepath = filepath
         let defaultMetaData = {
             track_name: 'Untitled',
             artist: 'Unknown',
@@ -8,7 +7,76 @@ class Track {
             genre: [],
             track_year: new Date().getFullYear()
         }
+        if (metadata !== undefined && metadata.genre !== undefined) {
+            if (!metadata.genre instanceof Array) {
+                throw 'Genre must be of type Array.'
+                return false
+            }
+        }
+        this.filepath = filepath
         this.metadata = Playlist.__extend(true, defaultMetaData, metadata)
+    }
+
+    setName (name) {
+        this.metadata.track_name = name
+    }
+
+    getName () {
+        return this.metadata.track_name
+    }
+
+    setArtist (artist) {
+        this.metadata.artist = artist
+    }
+
+    getArtist () {
+        return this.metadata.artist
+    }
+
+    setAlbum (album) {
+        this.metadata.album = album
+    }
+
+    getAlbum () {
+        return this.metadata.album
+    }
+
+    setGenre (genre) {
+        if (!genre instanceof Array) {
+            throw 'Genre must be of type Array.'
+            return
+        }
+        this.metadata.genre = genre
+    }
+
+    addGenre (genre) {
+        this.metadata.genre.push(genre)
+    }
+
+    removeGenre (genre) {
+        if (typeof genre === 'number') {
+            if (genre < 0 || genre >= this.metadata.genre.length) {
+                throw 'Genre number ' + genre + ' does not exist on this Track.'
+                return
+            }
+            this.metadata.genre.splice(genre, 1)
+        } else if (this.metadata.genre.includes(genre)) {
+            this.metadata.genre.splice(this.metadata.genre.indexOf(genre), 1)
+        } else {
+            throw 'Genre does not exist on this Track.'
+        }
+    }
+
+    getGenre () {
+        return this.metadata.genre
+    }
+
+    setYear (year) {
+        this.metadata.track_year = year
+    }
+
+    getYear () {
+        return this.metadata.track_year
     }
 }
 
@@ -19,7 +87,8 @@ class Playlist {
         this.current_track = 0
         this.looping = false
         this.audio_object = new Audio()
-        this.audio_object.addEventListener('ended', this.__handleSongEnd.bind(this))
+        this.audio_object.setAttribute('controls', true)
+        this.audio_object.addEventListener('ended', Playlist.__handleSongEnd.bind(this))
         this.setTrack()
         let defaultOpts = {
             autoPlayNext: true,
@@ -232,7 +301,7 @@ class Playlist {
         }
     }
 
-    __handleSongEnd () {
+    static __handleSongEnd () {
         var jp = this
         if (jp.looping) {
             jp.seek(0)
