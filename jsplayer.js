@@ -6,29 +6,20 @@ class JSPlayer {
         }
 
         this.tracks = []
-        for (var i = 0; i < tracks.length; i++) {
-            if (tracks[i] instanceof Audio) {
-                this.tracks.push(tracks[i])
-                continue
-            } else if (typeof tracks[i] === 'string') {
-                try {
-                    this.tracks.push(new Audio(tracks[i]))
-                } catch (e) {
-                    throw 'JSPlayer must be constructed with an array containing at least one of either HTML5 Audio elements or valid audio file paths as its first parameter.'
-                }
-            }
-        }
+        this.addTrack(tracks)
         this.current_track = 0
         this.looping = false
+        this.volume = 1
 
         let defaultOpts = {
-            autoPlayNext: true
+            autoPlayNext: true,
+            autoPlayDelay: 500,
         }
         this.opts = this.__extend(true, defaultOpts)
     }
 
     getTrack () {
-        return this.tracks[current_track]
+        return this.tracks[this.current_track]
     }
 
     setTrack (song) {
@@ -64,27 +55,40 @@ class JSPlayer {
     }
 
     play (song) {
+        var jp = this
         if (typeof song !== undefined) {
-            this.setTrack(song)
+            jp.setTrack(song)
         }
-        this.getTrack().play()
-        this.getTrack().addEventListener('ended', this.__handleSongEnd)
+        jp.getTrack().volume = jp.volume
+        var playPromise = jp.getTrack().play()
+        if (playPromise !== undefined) {
+            playPromise.then(function() {
+            }).catch(function(e) {
+                console.warn(e)
+            })
+        }
     }
 
     next () {
+        this.stop()
         if (this.current_track == this.tracks.length - 1) {
-            this.setTrack(0)
+            this.current_track = 0
         } else {
-            this.setTrack(this.current_track + 1)
+            this.current_track++
         }
+        this.seek(0)
+        this.play()
     }
 
     prev () {
+        this.stop()
         if (this.current_track == 0) {
-            this.setTrack(this.tracks.length - 1)
+            this.current_track = this.tracks.length - 1
         } else {
-            this.setTrack(this.current_track - 1)
+            this.current_track--
         }
+        this.seek(0)
+        this.play()
     }
 
     shuffle () {
@@ -92,7 +96,17 @@ class JSPlayer {
     }
 
     seek (time) {
-        this.getTrack().currentTime = time
+        if (typeof time !== 'number') {
+            throw 'Time must be a number.'
+            return
+        }
+        if (time < 0) {
+            this.seek(0)
+        } else if (time > this.getTrack().duration) {
+            this.seek(this.getTrack().duration)
+        } else {
+            this.getTrack().currentTime = time
+        }
     }
 
     pause () {
@@ -102,7 +116,6 @@ class JSPlayer {
     stop () {
         this.pause()
         this.seek(0)
-        this.getTrack().removeEventListener('ended', this.__handleSongEnd)
     }
 
     setVolume (volume) {
@@ -110,7 +123,12 @@ class JSPlayer {
             throw 'Volume must be a number between 0 and 1.'
             return
         }
-        this.getTrack().volume = volume
+        this.volume = volume
+        this.getTrack().volume = this.volume
+    }
+
+    getTrackLength () {
+        return this.getTrack().duration
     }
 
     getVolume () {
@@ -133,10 +151,13 @@ class JSPlayer {
             return
         }
         if (song instanceof Audio) {
+            song.addEventListener('ended', this.__handleSongEnd.bind(this))
             this.tracks.push(song)
         } else if (typeof song === 'string') {
             try {
-                this.tracks.push(new Audio(song))
+                var track = new Audio(song)
+                track.addEventListener('ended', this.__handleSongEnd.bind(this))
+                this.tracks.push(track)
             } catch (e) {
                 throw 'Invalid parameter passed to JSPlayer.addTrack().'
             }
@@ -171,16 +192,16 @@ class JSPlayer {
     }
 
     __handleSongEnd () {
-        if (this.looping) {
-            this.stop()
-            this.play()
+        var jp = this
+        if (jp.looping) {
+            jp.seek(0)
+            jp.play()
             return
         }
-        if (this.opts.autoPlayNext) {
-            this.stop()
-            this.next()
-            this.seek(0)
-            this.play()
+        if (jp.opts.autoPlayNext) {
+            setTimeout(function () {
+                jp.next()
+            }, jp.opts.autoPlayDelay)
         }
     }
 
