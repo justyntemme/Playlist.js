@@ -3,20 +3,113 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>jsplayer</title>
+    <title>Playlist</title>
 </head>
 <body>
-    <h1>jsplayer</h1>
+    <h1>Playlist</h1>
 
-    <script src="jsplayer.js"></script>
+    <script src="playlist.js"></script>
     <script>
-        tracks = [
-            'congo-jungle-loop.mp3',
+        var heman = new Audio('he-man.mp3')
+
+        // the track list may contain paths to audio files
+        // or literal Audio elements.
+        var tracks = [
             'zelda.mp3',
-            'he-man.mp3'
+            'zelda2.mp3',
+            heman,
+            new Audio('wrong.mp3')
         ]
-        var player = new JSPlayer(tracks)
+        // to create a new player:
+        // var player = new Playlist(tracks)
+
+        // you can also pass in some options.
+        // you do not have to supply all of them.
+        // shown below are the defaults!
+        var player = new Playlist(tracks, {
+            autoPlayNext: true,  // after a track ends, automatically play the next!
+            autoPlayDelay: 500,  // delay (in milliseconds) before auto-playing the next track
+            volume: 1 // volume range from 0 to 1 (0 = muted, 0.5 = 50%, 1 = 100%)
+        })
+
+        /////////////
+        // WARNING //
+        /////////////
+        // The Playlist type adds event listeners directly onto any Audio objects
+        // that are passed in.
+        // This means you should not add the same Audio object to different Playlist objects,
+        // or else you'll cause terribly bad things to happen.
+        // It's okay if you're only passing in file names, though.
+
+        // Play:
         player.play()
+
+        // All other methods:
+        /**
+         *
+         * player.play([track])      // play the current track. if you optionally pass
+         *                           // in a track parameter, it will call setTrack() first.
+         *                           // i.e.:
+         *                           // player.play(2) is equivalent to:
+         *                           // player.setTrack(2); player.play()
+         *
+         * player.pause()            // pauses current track at the current time
+         *
+         * player.seek(number)       // seek to a point in the current track, in
+         *                           // seconds. must be a number.
+         *
+         * player.stop()             // stops current track and resets its current time
+         *                           // stop() is the same as:  player.pause(); player.seek(0)
+         *
+         * player.shuffle()          // stops the current track and shuffles the playlist.
+         *
+         * player.getTrack()         // returns the current track (Audio element)
+         *
+         * player.setTrack(track)    // setTrack can accept either a track number,
+         *                           // OR a reference to an Audio element that
+         *                           // is already on the playlist.
+         *
+         * player.addTrack(track)    // addTrack can accept either a single track,
+         *                           // or an array of tracks, where "track" is defined in the
+         *                           // same way as the track list passed into the constructor.
+         *
+         * player.removeTrack(track) // calls stop() on the current track, then removes
+         *                           // the given track or tracks from the playlist.
+         *                           // can accept either a single track,
+         *                           // or an array of tracks, where "track" is defined in the
+         *                           // same way as the track list passed into the constructor.
+         *
+         * player.next()             // calls stop() on the current track and then
+         *                           // switches the current track to the next song.
+         *                           // if the current track is last on the playlist,
+         *                           // it switches to the first.
+         *
+         * player.prev()             // calls stop() on the current track and then
+         *                           // switches the current track to the previous song.
+         *                           // if the current track is first on the playlist,
+         *                           // it switches to the last.
+         *
+         * player.setLoop(true)      // When looping is true: instead of stopping, the current
+         *                           // track will loop when ending. This option
+         *                           // overrides the autoPlayNext option.
+         *
+         * player.setAutoPlayNext(true)  // change the autoPlayNext option
+         *
+         * player.getAutoPlayNext()  // returns whether autoPlayNext is enabled
+         *
+         * player.setAutoPlayDelay(500)  // change the autoPlayDelay option
+         *
+         * player.getAutoPlayDelay() // returns the autoPlayDelay setting (ms)
+         *
+         * player.setVolume(number)  // change the volume option
+         *
+         * player.getVolume()        // returns the volume setting
+         *
+         * player.mute()             // exact same as player.setVolume(0)
+         *
+         * player.getTrackLength()   // get length of the current track in seconds
+         *
+         */
     </script>
 </body>
 </html>

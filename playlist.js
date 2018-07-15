@@ -1,7 +1,7 @@
-class JSPlayer {
+class Playlist {
     constructor (tracks, opts) {
         if (!(tracks instanceof Array) || tracks.length < 1) {
-            throw 'JSPlayer must be constructed with an array containing at least one of either HTML5 Audio elements or valid audio file paths as its first parameter.'
+            throw 'Playlist must be constructed with an array containing at least one of either HTML5 Audio elements or valid audio file paths as its first parameter.'
             return false
         }
 
@@ -9,13 +9,13 @@ class JSPlayer {
         this.addTrack(tracks)
         this.current_track = 0
         this.looping = false
-        this.volume = 1
 
         let defaultOpts = {
             autoPlayNext: true,
             autoPlayDelay: 500,
+            volume: 1
         }
-        this.opts = this.__extend(true, defaultOpts)
+        this.opts = this.__extend(true, defaultOpts, opts)
     }
 
     getTrack () {
@@ -42,14 +42,14 @@ class JSPlayer {
                         return false
                     }
                 } else {
-                    throw 'Invalid parameter passed to JSPlayer.setTrack().'
+                    throw 'Invalid parameter passed to Playlist.setTrack().'
                     return false
                 }
                 break
             case 'undefined':
                 break
             default:
-                throw 'Invalid parameter passed to JSPlayer.setTrack().'
+                throw 'Invalid parameter passed to Playlist.setTrack().'
                 break
         }
     }
@@ -59,7 +59,7 @@ class JSPlayer {
         if (typeof song !== undefined) {
             jp.setTrack(song)
         }
-        jp.getTrack().volume = jp.volume
+        jp.getTrack().volume = jp.opts.volume
         var playPromise = jp.getTrack().play()
         if (playPromise !== undefined) {
             playPromise.then(function() {
@@ -92,6 +92,7 @@ class JSPlayer {
     }
 
     shuffle () {
+        this.stop()
         this.tracks = this.__shuffle(this.tracks)
     }
 
@@ -123,8 +124,8 @@ class JSPlayer {
             throw 'Volume must be a number between 0 and 1.'
             return
         }
-        this.volume = volume
-        this.getTrack().volume = this.volume
+        this.opts.volume = volume
+        this.getTrack().volume = this.opts.volume
     }
 
     getTrackLength () {
@@ -137,6 +138,22 @@ class JSPlayer {
 
     mute () {
         this.setVolume(0)
+    }
+
+    setAutoPlayDelay (delay) {
+        this.opts.autoPlayDelay = delay
+    }
+
+    getAutoPlayDelay () {
+        return this.opts.autoPlayDelay
+    }
+
+    setAutoPlayNext (autoPlayNext) {
+        this.opts.autoPlayNext = !!autoPlayNext
+    }
+
+    getAutoPlayNext () {
+        return this.opts.autoPlayNext
     }
 
     setLoop (onOff) {
@@ -152,25 +169,32 @@ class JSPlayer {
         }
         if (song instanceof Audio) {
             song.addEventListener('ended', this.__handleSongEnd.bind(this))
+            song.load()
             this.tracks.push(song)
         } else if (typeof song === 'string') {
             try {
                 var track = new Audio(song)
                 track.addEventListener('ended', this.__handleSongEnd.bind(this))
+                track.load()
                 this.tracks.push(track)
             } catch (e) {
-                throw 'Invalid parameter passed to JSPlayer.addTrack().'
+                throw 'Invalid parameter passed to Playlist.addTrack().'
             }
         } else {
-            throw 'Invalid parameter passed to JSPlayer.addTrack().'
+            throw 'Invalid parameter passed to Playlist.addTrack().'
         }
     }
 
     removeTrack (song) {
+        this.stop()
         if (song instanceof Array) {
             for (var i = 0; i < song.length; i++) {
                 this.removeTrack(song[i])
             }
+            return
+        }
+        if (this.tracks.length == 1) {
+            throw 'The playlist must contain at least one track.'
             return
         }
         if (song instanceof Audio) {
@@ -187,7 +211,10 @@ class JSPlayer {
             }
             this.tracks.splice(song - 1, 1)
         } else {
-            throw 'Invalid parameter passed to JSPlayer.removeTrack().'
+            throw 'Invalid parameter passed to Playlist.removeTrack().'
+        }
+        if (this.current_track > this.tracks.length) {
+            this.setTrack(this.tracks.length - 1)
         }
     }
 
