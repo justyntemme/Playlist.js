@@ -89,11 +89,13 @@ class Playlist {
         this.audio_object = new Audio()
         this.audio_object.setAttribute('controls', true)
         this.audio_object.addEventListener('ended', Playlist.__handleSongEnd.bind(this))
+        if (opts !== undefined && opts.volume !== undefined) {
+            this.setVolume(opts.volume)
+        }
         this.setTrack()
         let defaultOpts = {
             autoPlayNext: true,
-            autoPlayDelay: 500,
-            volume: 1
+            autoPlayDelay: 500
         }
         this.opts = Playlist.__extend(true, defaultOpts, opts)
     }
@@ -142,12 +144,10 @@ class Playlist {
     }
 
     play (song) {
-        var jp = this
-        if (typeof song !== undefined) {
-            jp.setTrack(song)
+        if (typeof song !== 'undefined') {
+            this.setTrack(song)
         }
-        jp.getAudio().volume = jp.opts.volume
-        var playPromise = jp.getAudio().play()
+        var playPromise = this.getAudio().play()
         if (playPromise !== undefined) {
             playPromise.then(function() {
             }).catch(function(e) {
@@ -213,8 +213,7 @@ class Playlist {
             throw 'Volume must be a number between 0 and 1.'
             return
         }
-        this.opts.volume = volume
-        this.getAudio().volume = this.opts.volume
+        this.getAudio().volume = volume
     }
 
     getTrackLength () {
