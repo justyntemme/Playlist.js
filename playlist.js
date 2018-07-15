@@ -119,7 +119,7 @@ class Playlist {
                 }
                 this.stop()
                 if (this.current_track !== track - 1) {
-                    this.opts.trackChanged(this)
+                    this.opts.trackChanged(this, this.current_track + 1, track)
                 }
                 this.current_track = track - 1
                 this.audio_object.src = this.tracks[this.current_track].filepath
@@ -128,10 +128,11 @@ class Playlist {
                 if (track instanceof Track) {
                     if (this.tracks.includes(track)) {
                         this.stop()
-                        if (this.current_track !== this.tracks.indexOf(track)) {
-                            this.opts.trackChanged(this)
+                        let newTrack = this.tracks.indexOf(track)
+                        if (this.current_track !== newTrack) {
+                            this.opts.trackChanged(this, this.current_track + 1, newTrack + 1)
                         }
-                        this.current_track = this.tracks.indexOf(track)
+                        this.current_track = newTrack
                         this.audio_object.src = this.tracks[this.current_track].filepath
                     } else {
                         throw 'Track "' + track.metadata.track_name + '" does not exist on this Playlist.'
@@ -173,7 +174,7 @@ class Playlist {
             this.current_track++
         }
         if (this.current_track !== old_track) {
-            this.opts.trackChanged(this)
+            this.opts.trackChanged(this, old_track + 1, this.current_track + 1)
         }
         this.audio_object.src = this.tracks[this.current_track].filepath
         this.seek(0)
@@ -189,7 +190,7 @@ class Playlist {
             this.current_track--
         }
         if (this.current_track !== old_track) {
-            this.opts.trackChanged(this)
+            this.opts.trackChanged(this, old_track + 1, this.current_track + 1)
         }
         this.audio_object.src = this.tracks[this.current_track].filepath
         this.seek(0)
