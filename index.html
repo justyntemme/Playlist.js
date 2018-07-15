@@ -53,7 +53,9 @@
             new Track('zelda.mp3'),
             'zelda2.mp3',
             'he-man.mp3',
-            'wrong.mp3'
+            new Track('wrong.mp3', {
+                track_name: 'BUZZERRRRRRRR'
+            })
         ]
         // to create a new Playlist:
         // var player = new Playlist(tracks)
@@ -64,7 +66,13 @@
         var player = new Playlist(tracks, {
             autoPlayNext: true,  // after a track ends, automatically play the next!
             autoPlayDelay: 500,  // delay (in milliseconds) before auto-playing the next track
-            volume: 1 // volume range from 0 to 1 (0 = muted, 0.5 = 50%, 1 = 100%)
+            volume: 1, // volume range from 0 to 1 (0 = muted, 0.5 = 50%, 1 = 100%)
+            trackChanged: function (playerObj) { // optional callback function to run when the track changes
+                // nothing runs by default
+                let track = playerObj.getTrack()
+                document.getElementById('songname').textContent = '"' + track.getName() + '" by ' + track.getArtist()
+                console.log("track changed")
+            }
         })
 
         // Play:

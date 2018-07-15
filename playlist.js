@@ -95,7 +95,9 @@ class Playlist {
         this.setTrack()
         let defaultOpts = {
             autoPlayNext: true,
-            autoPlayDelay: 500
+            autoPlayDelay: 500,
+            trackChanged: function () {
+            }
         }
         this.opts = Playlist.__extend(true, defaultOpts, opts)
     }
@@ -116,6 +118,9 @@ class Playlist {
                     return false
                 }
                 this.stop()
+                if (this.current_track !== track - 1) {
+                    this.opts.trackChanged(this)
+                }
                 this.current_track = track - 1
                 this.audio_object.src = this.tracks[this.current_track].filepath
                 break
@@ -123,6 +128,9 @@ class Playlist {
                 if (track instanceof Track) {
                     if (this.tracks.includes(track)) {
                         this.stop()
+                        if (this.current_track !== this.tracks.indexOf(track)) {
+                            this.opts.trackChanged(this)
+                        }
                         this.current_track = this.tracks.indexOf(track)
                         this.audio_object.src = this.tracks[this.current_track].filepath
                     } else {
@@ -158,10 +166,14 @@ class Playlist {
 
     next () {
         this.stop()
+        let old_track = this.current_track
         if (this.current_track == this.tracks.length - 1) {
             this.current_track = 0
         } else {
             this.current_track++
+        }
+        if (this.current_track !== old_track) {
+            this.opts.trackChanged(this)
         }
         this.audio_object.src = this.tracks[this.current_track].filepath
         this.seek(0)
@@ -170,10 +182,14 @@ class Playlist {
 
     prev () {
         this.stop()
+        let old_track = this.current_track
         if (this.current_track == 0) {
             this.current_track = this.tracks.length - 1
         } else {
             this.current_track--
+        }
+        if (this.current_track !== old_track) {
+            this.opts.trackChanged(this)
         }
         this.audio_object.src = this.tracks[this.current_track].filepath
         this.seek(0)
