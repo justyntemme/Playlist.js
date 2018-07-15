@@ -1,44 +1,61 @@
+class Track {
+    constructor (filepath, metadata) {
+        this.filepath = filepath
+        let defaultMetaData = {
+            track_name: 'Untitled',
+            artist: 'Unknown',
+            album: 'N/A',
+            genre: [],
+            track_year: new Date().getFullYear()
+        }
+        this.metadata = Playlist.__extend(true, defaultMetaData, metadata)
+    }
+}
+
 class Playlist {
     constructor (tracks, opts) {
-        if (!(tracks instanceof Array) || tracks.length < 1) {
-            throw 'Playlist must be constructed with an array containing at least one of either HTML5 Audio elements or valid audio file paths as its first parameter.'
-            return false
-        }
-
         this.tracks = []
         this.addTrack(tracks)
         this.current_track = 0
         this.looping = false
-
+        this.audio_object = new Audio()
+        this.audio_object.addEventListener('ended', this.__handleSongEnd.bind(this))
+        this.setTrack()
         let defaultOpts = {
             autoPlayNext: true,
             autoPlayDelay: 500,
             volume: 1
         }
-        this.opts = this.__extend(true, defaultOpts, opts)
+        this.opts = Playlist.__extend(true, defaultOpts, opts)
     }
 
     getTrack () {
         return this.tracks[this.current_track]
     }
 
-    setTrack (song) {
-        switch (typeof song) {
+    getAudio () {
+        return this.audio_object
+    }
+
+    setTrack (track) {
+        switch (typeof track) {
             case 'number':
-                if (song > this.tracks.length) {
-                    throw 'Cannot set track number ' + song + '; there are only ' + this.tracks.length + ' tracks.'
+                if (track < 1 || track > this.tracks.length) {
+                    throw 'Track number ' + track + ' does not exist on this Playlist.'
                     return false
                 }
                 this.stop()
-                this.current_track = song - 1
+                this.current_track = track - 1
+                this.audio_object.src = this.tracks[this.current_track].filepath
                 break
             case 'object':
-                if (song instanceof Audio) {
-                    if (this.tracks.includes(song)) {
+                if (track instanceof Track) {
+                    if (this.tracks.includes(track)) {
                         this.stop()
-                        this.current_track = this.tracks.indexOf(song)
+                        this.current_track = this.tracks.indexOf(track)
+                        this.audio_object.src = this.tracks[this.current_track].filepath
                     } else {
-                        throw 'Cannot set track to this Audio element. It must be added to the track list first.'
+                        throw 'Track "' + track.metadata.track_name + '" does not exist on this Playlist.'
                         return false
                     }
                 } else {
@@ -47,6 +64,7 @@ class Playlist {
                 }
                 break
             case 'undefined':
+                this.audio_object.src = this.tracks[this.current_track].filepath
                 break
             default:
                 throw 'Invalid parameter passed to Playlist.setTrack().'
@@ -59,8 +77,8 @@ class Playlist {
         if (typeof song !== undefined) {
             jp.setTrack(song)
         }
-        jp.getTrack().volume = jp.opts.volume
-        var playPromise = jp.getTrack().play()
+        jp.getAudio().volume = jp.opts.volume
+        var playPromise = jp.getAudio().play()
         if (playPromise !== undefined) {
             playPromise.then(function() {
             }).catch(function(e) {
@@ -76,6 +94,7 @@ class Playlist {
         } else {
             this.current_track++
         }
+        this.audio_object.src = this.tracks[this.current_track].filepath
         this.seek(0)
         this.play()
     }
@@ -87,6 +106,7 @@ class Playlist {
         } else {
             this.current_track--
         }
+        this.audio_object.src = this.tracks[this.current_track].filepath
         this.seek(0)
         this.play()
     }
@@ -103,15 +123,15 @@ class Playlist {
         }
         if (time < 0) {
             this.seek(0)
-        } else if (time > this.getTrack().duration) {
-            this.seek(this.getTrack().duration)
+        } else if (time > this.getAudio().duration) {
+            this.seek(this.getAudio().duration)
         } else {
-            this.getTrack().currentTime = time
+            this.getAudio().currentTime = time
         }
     }
 
     pause () {
-        this.getTrack().pause()
+        this.getAudio().pause()
     }
 
     stop () {
@@ -125,15 +145,15 @@ class Playlist {
             return
         }
         this.opts.volume = volume
-        this.getTrack().volume = this.opts.volume
+        this.getAudio().volume = this.opts.volume
     }
 
     getTrackLength () {
-        return this.getTrack().duration
+        return this.getAudio().duration
     }
 
     getVolume () {
-        return this.getTrack().volume
+        return this.getAudio().volume
     }
 
     mute () {
@@ -160,58 +180,52 @@ class Playlist {
         this.looping = !!onOff
     }
 
-    addTrack (song) {
-        if (song instanceof Array) {
-            for (var i = 0; i < song.length; i++) {
-                this.addTrack(song[i])
+    addTrack (track) {
+        if (track instanceof Array) {
+            for (var i = 0; i < track.length; i++) {
+                this.addTrack(track[i])
             }
             return
-        }
-        if (song instanceof Audio) {
-            song.addEventListener('ended', this.__handleSongEnd.bind(this))
-            song.load()
-            this.tracks.push(song)
-        } else if (typeof song === 'string') {
-            try {
-                var track = new Audio(song)
-                track.addEventListener('ended', this.__handleSongEnd.bind(this))
-                track.load()
-                this.tracks.push(track)
-            } catch (e) {
-                throw 'Invalid parameter passed to Playlist.addTrack().'
-            }
+        } else if (typeof track === 'string') {
+            this.tracks.push(new Track(track))
+        } else if (track instanceof Track) {
+            this.tracks.push(track)
         } else {
-            throw 'Invalid parameter passed to Playlist.addTrack().'
+            throw 'Invalid parameter passed to Playlist.addTrack(). Must be string or Track.'
         }
     }
 
-    removeTrack (song) {
+    removeTrack (track) {
         this.stop()
-        if (song instanceof Array) {
-            for (var i = 0; i < song.length; i++) {
-                this.removeTrack(song[i])
+        if (track instanceof Array) {
+            for (var i = 0; i < track.length; i++) {
+                this.removeTrack(track[i])
             }
             return
         }
-        if (this.tracks.length == 1) {
-            throw 'The playlist must contain at least one track.'
-            return
-        }
-        if (song instanceof Audio) {
-            if (this.tracks.includes(song)) {
-                this.tracks.splice(this.tracks.indexOf(song), 1)
+        if (track instanceof Track) {
+            if (this.tracks.includes(track)) {
+                if (this.tracks.length == 1) {
+                    throw 'Playlists must contain at least one Track.'
+                    return
+                }
+                this.tracks.splice(this.tracks.indexOf(track), 1)
             } else {
-                throw 'One cannot remove a track that one has never added.'
+                throw 'Track "' + track.metadata.track_name + '" does not exist on this Playlist.'
                 return
             }
-        } else if (typeof song === 'number') {
-            if (song > this.tracks.length) {
-                throw 'There aren\'t even ' + song + ' tracks on this track list.'
+        } else if (typeof track === 'number') {
+            if (track < 0 || track > this.tracks.length) {
+                throw 'Track number ' + track + ' does not exist on this Playlist.'
                 return
             }
-            this.tracks.splice(song - 1, 1)
+            if (this.tracks.length == 1) {
+                throw 'Playlists must contain at least one Track.'
+                return
+            }
+            this.tracks.splice(track - 1, 1)
         } else {
-            throw 'Invalid parameter passed to Playlist.removeTrack().'
+            throw 'Invalid parameter passed to Playlist.removeTrack(). Must be number or Track.'
         }
         if (this.current_track > this.tracks.length) {
             this.setTrack(this.tracks.length - 1)
@@ -234,7 +248,7 @@ class Playlist {
 
     // source: https://gomakethings.com/vanilla-javascript-version-of-jquery-extend/
     // mimics jQuery's $.extend
-    __extend () {
+    static __extend () {
         var crm = this
         var extended = {}
         var deep = false
@@ -272,7 +286,7 @@ class Playlist {
 
     // source: https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
     // shuffles an array
-    __shuffle(a) {
+    static __shuffle(a) {
         var j, x, i;
         for (i = a.length - 1; i > 0; i--) {
             j = Math.floor(Math.random() * (i + 1));

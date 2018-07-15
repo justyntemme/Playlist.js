@@ -10,17 +10,33 @@
 
     <script src="playlist.js"></script>
     <script>
-        var heman = new Audio('he-man.mp3')
+        // To create a new Track object:
+        // var track = new Track('path-to-file.mp3')
+        // or, use a URL!
+        // var track = new Track('https://cloud.andrewsiegman.com/360Pong2.mp3')
+
+        // you can also pass in some metadata!
+        // you do NOT have to supply all, or any, of them.
+        // shown below is an example using every option:
+        var my360PongTrack = new Track('https://cloud.andrewsiegman.com/360Pong2.mp3', {
+            track_name: '360Pong v2',     // default:  'Untitled'
+            artist: 'Andrew Siegman',     // default:  'Unknown'
+            album: 'N/A',                 // default:  'N/A'
+            genre: ['chiptune', '8-bit'], // default:  []
+            track_year: 2017              // default:  new Date().getFullYear()
+        })
+
 
         // the track list may contain paths to audio files
-        // or literal Audio elements.
+        // or Track objects.
         var tracks = [
-            'zelda.mp3',
+            my360PongTrack,
+            new Track('zelda.mp3'),
             'zelda2.mp3',
-            heman,
-            new Audio('wrong.mp3')
+            'he-man.mp3',
+            'wrong.mp3'
         ]
-        // to create a new player:
+        // to create a new Playlist:
         // var player = new Playlist(tracks)
 
         // you can also pass in some options.
@@ -32,23 +48,14 @@
             volume: 1 // volume range from 0 to 1 (0 = muted, 0.5 = 50%, 1 = 100%)
         })
 
-        /////////////
-        // WARNING //
-        /////////////
-        // The Playlist type adds event listeners directly onto any Audio objects
-        // that are passed in.
-        // This means you should not add the same Audio object to different Playlist objects,
-        // or else you'll cause terribly bad things to happen.
-        // It's okay if you're only passing in file names, though.
-
         // Play:
         player.play()
 
         // All other methods:
         /**
          *
-         * player.play([track])      // play the current track. if you optionally pass
-         *                           // in a track parameter, it will call setTrack() first.
+         * player.play([track])      // play the current Track. optionally pass
+         *                           // in a Track object or a number to call setTrack() first.
          *                           // i.e.:
          *                           // player.play(2) is equivalent to:
          *                           // player.setTrack(2); player.play()
