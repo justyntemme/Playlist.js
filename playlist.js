@@ -320,8 +320,11 @@ class Playlist {
     static __handleSongEnd () {
         var jp = this
         if (jp.looping) {
-            jp.seek(0)
-            jp.play()
+            jp.pause()
+            setTimeout(function () {
+                jp.seek(0)
+                jp.play()
+            }, jp.opts.autoPlayDelay)
             return
         }
         if (jp.opts.autoPlayNext) {
